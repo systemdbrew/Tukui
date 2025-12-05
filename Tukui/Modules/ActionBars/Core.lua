@@ -29,6 +29,10 @@ function ActionBars:DisableBlizzard()
 		frame:UnregisterAllEvents()
 		frame:SetParent(Hider)
 	end
+	
+	if T.Retail then
+		MainActionBar:SetParent(T.Hider)
+	end
 
 	local Options = {
 		InterfaceOptionsActionBarsPanelBottomLeft,

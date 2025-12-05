@@ -240,8 +240,10 @@ function Bags:Enable()
 	self:SkinButtons()
 
 	Movers:RegisterFrame(ContainerFrameCombinedBags, "Bags")
-
-	T.Print("The bags module is currently under development, please be patient")
+	
+	if T.Retail then
+		T.Print("NEWS: Tukui 22 will be back in full health for midnight with a total rewrite from scratch, meanwhile, here a patched version of Tukui 21 until Midnight release. If you see some errors, don't hesitate to ping me on Discord - Tukz")
+	end
 end
 
 Inventory.Bags = Bags

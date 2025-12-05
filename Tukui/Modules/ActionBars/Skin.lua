@@ -79,6 +79,10 @@ function ActionBars:SkinButton(button)
 
 		Icon:SetTexCoord(unpack(T.IconCoord))
 		Icon:SetDrawLayer("BACKGROUND", 7)
+		
+		if T.Retail then
+			Icon:SetInside()
+		end
 
 		if (Normal) then
 			Normal:ClearAllPoints()
