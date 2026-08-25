@@ -8,7 +8,11 @@ local Resolution = select(1, GetPhysicalScreenSize()).."x"..select(2, GetPhysica
 local Windowed = Display_DisplayModeDropDown and Display_DisplayModeDropDown:windowedmode()
 local Fullscreen = Display_DisplayModeDropDown and Display_DisplayModeDropDown:fullscreenmode()
 local Toc = select(4, GetBuildInfo())
-local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
+local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
+
+if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+	error("This Tukui fork supports World of Warcraft Retail only.")
+end
 
 Engine[1] = CreateFrame("Frame")
 Engine[2] = {}
@@ -30,14 +34,10 @@ function Engine:unpack()
 	return self[1], self[2], self[3], self[4]
 end
 
-Engine[1].Retail = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
-Engine[1].BCC = (WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC) or (Toc >= 20000 and Toc < 30000)
-Engine[1].Classic = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC
-Engine[1].WotLK = (WOW_PROJECT_ID == WOW_PROJECT_WRATH_CLASSIC) or (Toc >= 30000 and Toc < 40000)
-Engine[1].Cata = (WOW_PROJECT_ID == WOW_PROJECT_CATACLYSM_CLASSIC) or (Toc >= 40000 and Toc < 50000)
-Engine[1].MoP = Toc >= 50000 and Toc < 60000
-Engine[1].DF = Toc >= 100000 and Toc < 110000
-Engine[1].TWW = Toc >= 110000 and Toc < 120000
+-- This branch intentionally targets Retail only. Keep one explicit client flag
+-- for existing Tukui code and expose the current expansion generation.
+Engine[1].Retail = true
+Engine[1].Midnight = Toc >= 120000 and Toc < 130000
 Engine[1].WindowedMode = Windowed
 Engine[1].FullscreenMode = Fullscreen
 Engine[1].Resolution = Resolution or (Windowed and GetCVar("gxWindowedResolution")) or GetCVar("gxFullscreenResolution")
