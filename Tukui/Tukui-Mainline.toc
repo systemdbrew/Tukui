@@ -1,9 +1,11 @@
-## Interface: 110207
+## Interface: 120100
 ## Author: Tukz
 ## X-Maintainer: Tukz
+## X-Modernized-By: systemdbrew
+## X-Retail-Only: true
 ## Version: @project-version@
 ## Title: |cffff8000Tukui|r
-## Notes: UI of awesomeness!
+## Notes: UI of awesomeness! (Retail 12.x modernization fork)
 ## SavedVariables: TukuiDatabase, TukuiData, TukuiSettings, TukuiGold, TukuiSettingsPerCharacter, TukuiChatHistory
 ## OptionalDeps: Clique
 ## IconTexture: Interface\Icons\Spell_priest_pontifex
