@@ -100,6 +100,33 @@ if T.Midnight then
 
 		return LegacyDisplayNameplatePowerAndCastBar(self, unit, cur, min, max)
 	end
+
+	-- GetItemQualityColor() now returns a fourth hexadecimal color string.
+	-- Tukui's tooltip code historically forwarded every return value into
+	-- SetBorderColor(), where that string becomes an invalid alpha argument.
+	-- Keep the original tooltip behavior but pass RGB only.
+	local Tooltip = T["Tooltips"]
+	if Tooltip then
+		Tooltip.SetItemBorderColor = function(self, tooltip)
+			local Link = tooltip.GetItem and select(2, tooltip:GetItem())
+			local Backdrop = tooltip.Backdrop
+
+			if not Backdrop then
+				return
+			end
+
+			if Link then
+				local Quality = select(3, GetItemInfo(Link))
+				if Quality then
+					local R, G, B = GetItemQualityColor(Quality)
+					Backdrop:SetBorderColor(R, G, B)
+					return
+				end
+			end
+
+			Backdrop:SetBorderColor(unpack(C.General.BorderColor))
+		end
+	end
 end
 
 -- TEMP for bugs fixes
