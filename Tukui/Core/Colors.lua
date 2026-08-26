@@ -87,4 +87,11 @@ oUF.colors.mirror = {
 	FEIGNDEATH = { 1.0, 0.70, 0.0 }
 }
 
+-- The bundled tag engine still resolves its dynamic _COLORS context through
+-- frame.colors. Newer oUF frames no longer populate that field themselves,
+-- so expose the shared palette through the frame metatable for compatibility.
+if oUF.Private and oUF.Private.frame_metatable and oUF.Private.frame_metatable.__index then
+	oUF.Private.frame_metatable.__index.colors = oUF.colors
+end
+
 T["Colors"] = oUF.colors
