@@ -18,7 +18,6 @@ local colorMixin = {
 		self[3] = b
 		self.a = a
 
-		-- pre-generate the hex color, there's no point to this being generated on the fly
 		self.hex = string.format('ff%02x%02x%02x', self:GetRGBAsBytes())
 	end,
 	SetAtlas = function(self, atlas)
@@ -32,22 +31,6 @@ local colorMixin = {
 	end,
 }
 
---[[ Colors: oUF:CreateColor(r, g, b[, a])
-Wrapper for [SharedXML\Color.lua's ColorMixin](https://warcraft.wiki.gg/wiki/ColorMixin), extended to support indexed colors used in oUF, as
-well as extra methods for dealing with atlases.
-
-The rgb values can be either normalized (0-1) or bytes (0-255).
-
-* self - the global oUF object
-* r    - value used as represent the red color (number)
-* g    - value used to represent the green color (number)
-* b    - value used to represent the blue color (number)
-* a    - value used to represent the opacity (number, optional)
-
-## Returns
-
-* color - the ColorMixin-based object
---]]
 function oUF:CreateColor(r, g, b, a)
 	local color = Mixin({}, ColorMixin, colorMixin)
 	color:SetRGBA(r, g, b, a)
@@ -65,25 +48,23 @@ local colors = {
 	disconnected = oUF:CreateColor(0.6, 0.6, 0.6),
 	tapped = oUF:CreateColor(0.6, 0.6, 0.6),
 	runes = {
-		oUF:CreateColor(247, 65, 57), -- blood
-		oUF:CreateColor(148, 203, 247), -- frost
-		oUF:CreateColor(173, 235, 66), -- unholy
+		oUF:CreateColor(247, 65, 57),
+		oUF:CreateColor(148, 203, 247),
+		oUF:CreateColor(173, 235, 66),
 	},
 	selection = {
-		[ 0] = oUF:CreateColor(255, 0, 0), -- HOSTILE
-		[ 1] = oUF:CreateColor(255, 129, 0), -- UNFRIENDLY
-		[ 2] = oUF:CreateColor(255, 255, 0), -- NEUTRAL
-		[ 3] = oUF:CreateColor(0, 255, 0), -- FRIENDLY
-		[ 4] = oUF:CreateColor(0, 0, 255), -- PLAYER_SIMPLE
-		[ 5] = oUF:CreateColor(96, 96, 255), -- PLAYER_EXTENDED
-		[ 6] = oUF:CreateColor(170, 170, 255), -- PARTY
-		[ 7] = oUF:CreateColor(170, 255, 170), -- PARTY_PVP
-		[ 8] = oUF:CreateColor(83, 201, 255), -- FRIEND
-		[ 9] = oUF:CreateColor(128, 128, 128), -- DEAD
-		-- [10] = {}, -- COMMENTATOR_TEAM_1, unavailable to players
-		-- [11] = {}, -- COMMENTATOR_TEAM_2, unavailable to players
-		[12] = oUF:CreateColor(255, 255, 139), -- SELF, buggy
-		[13] = oUF:CreateColor(0, 153, 0), -- BATTLEGROUND_FRIENDLY_PVP
+		[ 0] = oUF:CreateColor(255, 0, 0),
+		[ 1] = oUF:CreateColor(255, 129, 0),
+		[ 2] = oUF:CreateColor(255, 255, 0),
+		[ 3] = oUF:CreateColor(0, 255, 0),
+		[ 4] = oUF:CreateColor(0, 0, 255),
+		[ 5] = oUF:CreateColor(96, 96, 255),
+		[ 6] = oUF:CreateColor(170, 170, 255),
+		[ 7] = oUF:CreateColor(170, 255, 170),
+		[ 8] = oUF:CreateColor(83, 201, 255),
+		[ 9] = oUF:CreateColor(128, 128, 128),
+		[12] = oUF:CreateColor(255, 255, 139),
+		[13] = oUF:CreateColor(0, 153, 0),
 	},
 	class = {},
 	debuff = {},
@@ -92,8 +73,6 @@ local colors = {
 	threat = {},
 }
 
--- We do this because people edit the vars directly, and changing the default
--- globals makes SPICE FLOW!
 local function customClassColors()
 	if(_G.CUSTOM_CLASS_COLORS) then
 		local function updateColors()
@@ -128,10 +107,6 @@ if(not customClassColors()) then
 	end)
 end
 
--- Retail 12.x removed the legacy global DebuffTypeColor table. oUF still
--- needs a stable palette for non-secret/static styling, so preserve the old
--- public colors as a compatibility fallback. Aura-specific dispel information
--- is handled separately by the modern UnitAura APIs.
 local DebuffTypeColor = _G.DebuffTypeColor or {
 	none = { r = 0.80, g = 0.00, b = 0.00 },
 	Magic = { r = 0.20, g = 0.60, b = 1.00 },
@@ -165,7 +140,6 @@ for power, color in next, PowerBarColor do
 				colors.power[power]:SetAtlas(color.atlas)
 			end
 		else
-			-- special handling for stagger
 			colors.power[power] = {}
 
 			for name, color_ in next, color do
@@ -182,8 +156,6 @@ for power, color in next, PowerBarColor do
 	end
 end
 
--- fallback integer index to named index
--- sourced from PowerBarColor - Blizzard_UnitFrame/Mainline/PowerBarColorUtil.lua
 colors.power[Enum.PowerType.Mana or 0] = colors.power.MANA
 colors.power[Enum.PowerType.Rage or 1] = colors.power.RAGE
 colors.power[Enum.PowerType.Focus or 2] = colors.power.FOCUS
@@ -198,17 +170,10 @@ colors.power[Enum.PowerType.Maelstrom or 11] = colors.power.MAELSTROM
 colors.power[Enum.PowerType.Insanity or 13] = colors.power.INSANITY
 colors.power[Enum.PowerType.Fury or 17] = colors.power.FURY
 colors.power[Enum.PowerType.Pain or 18] = colors.power.PAIN
-
--- these two don't have fallback values in PowerBarColor, but we want them
 colors.power[Enum.PowerType.Chi or 12] = colors.power.CHI
 colors.power[Enum.PowerType.ArcaneCharges or 16] = colors.power.ARCANE_CHARGES
-
--- there's no official colour for evoker's essence
--- use the average colour of the essence texture instead
 colors.power.ESSENCE = oUF:CreateColor(100, 173, 206)
 colors.power[Enum.PowerType.Essence or 19] = colors.power.ESSENCE
-
--- alternate power, sourced from Blizzard_UnitFrame/Mainline/CompactUnitFrame.lua
 colors.power.ALTERNATE = oUF:CreateColor(0.7, 0.7, 0.6)
 colors.power[Enum.PowerType.Alternate or 10] = colors.power.ALTERNATE
 
@@ -228,24 +193,6 @@ local function colorsAndPercent(a, b, ...)
 	return relperc, select((segment * 3) + 1, ...)
 end
 
--- https://warcraft.wiki.gg/wiki/ColorGradient
---[[ Colors: oUF:RGBColorGradient(a, b, ...)
-Used to convert a percent value (the quotient of `a` and `b`) into a gradient from 2 or more RGB colors. If more than 2
-colors are passed, the gradient will be between the two colors which perc lies in an evenly divided range. A RGB color
-is a sequence of 3 values: red, green and blue. For instance, oUF:RGBColorGradient(.75, 1, 1, 0, 0, 1, 1, 0) will return
-1, .5, 0.
-
-* self - the global oUF object
-* a    - value used as numerator (number)
-* b    - value used as denominator (number)
-* ...  - a list of RGB colors, red, green and blue (number)
-
-## Returns
-
-* r - red value (number)
-* g - green value (number)
-* b - blue value (number)
---]]
 function oUF:RGBColorGradient(a, b, ...)
 	local relperc, r1, g1, b1, r2, g2, b2 = colorsAndPercent(a, b, ...)
 	if(not relperc) then
@@ -255,23 +202,6 @@ function oUF:RGBColorGradient(a, b, ...)
 	return r1 + (r2 - r1) * relperc, g1 + (g2 - g1) * relperc, b1 + (b2 - b1) * relperc
 end
 
--- https://warcraft.wiki.gg/wiki/ColorGradient
---[[ Colors: oUF:ColorGradient(a, b, ...)
-Used to convert a percent value (the quotient of `a` and `b`) into a gradient from 2 or more colors. If more than 2
-colors are passed, the gradient will be between the two colors which perc lies in an evenly divided range. A color is a
-ColorMixin based object, created by oUF:CreateColor().
-
-* self - the global oUF object
-* a    - value used as numerator (number)
-* b    - value used as denominator (number)
-* ...  - a list of colors (ColorMixin, 2 or more)
-
-## Returns
-
-* r - red value (number)
-* g - green value (number)
-* b - blue value (number)
---]]
 function oUF:ColorGradient(a, b, ...)
 	local colors_ = {...}
 	local colorCount = #colors_
@@ -297,5 +227,9 @@ function oUF:UpdateAllColors()
 	end
 end
 
+-- Frame userdata inherit methods through frame_metatable.__index. Assigning
+-- colors directly to frame_metatable does not make self.colors visible to the
+-- Health/Power elements. Put the shared palette on the actual __index object.
+frame_metatable.__index.colors = colors
 frame_metatable.colors = colors
 oUF.colors = colors
