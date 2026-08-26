@@ -68,6 +68,38 @@ if T.Midnight then
 			self.Value:SetText(SecretSafeText(min) or "")
 		end
 	end
+
+	local LegacyDisplayNameplatePowerAndCastBar = UnitFrames.DisplayNameplatePowerAndCastBar
+	UnitFrames.DisplayNameplatePowerAndCastBar = function(self, unit, cur, min, max)
+		-- Nameplate power can be secret in 12.1. The legacy callback compares
+		-- current/max power to zero, which taints and errors. In that case keep
+		-- the power layout visible and let oUF update the protected bar itself.
+		if issecretvalue and ((cur ~= nil and issecretvalue(cur)) or (max ~= nil and issecretvalue(max))) then
+			local Nameplate = self:GetParent()
+			local PowerBar = Nameplate and Nameplate.Power
+			local Health = Nameplate and Nameplate.Health
+			local CastBar = Nameplate and Nameplate.Castbar
+
+			if PowerBar and Health and PowerBar.IsHidden then
+				Health:ClearAllPoints()
+				Health:SetPoint("TOPLEFT")
+				Health:SetPoint("TOPRIGHT")
+				Health:SetHeight(Nameplate:GetHeight() - PowerBar:GetHeight() - 1)
+
+				if CastBar then
+					CastBar:ClearAllPoints()
+					CastBar:SetAllPoints(PowerBar)
+				end
+
+				PowerBar:SetAlpha(1)
+				PowerBar.IsHidden = false
+			end
+
+			return
+		end
+
+		return LegacyDisplayNameplatePowerAndCastBar(self, unit, cur, min, max)
+	end
 end
 
 -- TEMP for bugs fixes
