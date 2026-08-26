@@ -177,7 +177,6 @@ Modules\Miscellaneous\Keybinds.lua
 Modules\Miscellaneous\LossControl.lua
 Modules\Miscellaneous\MicroMenu.lua
 Modules\Miscellaneous\MirrorTimers.lua
-Modules\Miscellaneous\ObjectiveTracker.lua
 Modules\Miscellaneous\OrderHall.lua
 Modules\Miscellaneous\RaidUtilities.lua
 Modules\Miscellaneous\StaticPopups.lua
