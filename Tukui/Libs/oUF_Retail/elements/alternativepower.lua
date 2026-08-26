@@ -20,7 +20,6 @@ local Private = oUF.Private
 local unitSelectionType = Private.unitSelectionType
 local issecretvalue = issecretvalue
 
--- sourced from Blizzard_UnitFrame/UnitPowerBarAlt.lua
 local ALTERNATE_POWER_INDEX = Enum.PowerType.Alternate or 10
 local ALTERNATE_POWER_NAME = 'ALTERNATE'
 local IS_MIDNIGHT = (oUF.Interface or 0) >= 120000
@@ -61,9 +60,6 @@ local function UpdateColor(self, event, unit, powerType)
 		color = self.colors.reaction[UnitReaction(unit, 'player')]
 	elseif(element.colorSmooth) then
 		if IS_MIDNIGHT then
-			-- 12.1 alternative power can be secret. Do not compare/add/divide it in
-			-- addon Lua; use the static alternate-power color while Blizzard owns
-			-- the protected StatusBar value.
 			color = self.colors.power[ALTERNATE_POWER_INDEX] or self.colors.health
 		else
 			local adjust = 0 - (element.min or 0)
@@ -118,8 +114,10 @@ local function Update(self, event, unit, powerType)
 end
 
 local function Path(self, ...)
-	(self.AlternativePower.Override or Update) (self, ...)
-	(self.AlternativePower.UpdateColor or UpdateColor) (self, ...)
+	local update = self.AlternativePower.Override or Update
+	local updateColor = self.AlternativePower.UpdateColor or UpdateColor
+	update(self, ...)
+	updateColor(self, ...)
 end
 
 local function Visibility(self, event, unit)
@@ -151,7 +149,8 @@ local function Visibility(self, event, unit)
 end
 
 local function VisibilityPath(self, ...)
-	return (self.AlternativePower.OverrideVisibility or Visibility) (self, ...)
+	local visibility = self.AlternativePower.OverrideVisibility or Visibility
+	return visibility(self, ...)
 end
 
 local function ForceUpdate(element)
