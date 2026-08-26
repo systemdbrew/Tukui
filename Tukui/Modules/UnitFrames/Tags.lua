@@ -39,19 +39,26 @@ if T.Retail then
 	end
 end
 
-oUF.Tags.Events["Tukui:GetNameColor"] = "UNIT_POWER_UPDATE"
+oUF.Tags.Events["Tukui:GetNameColor"] = "UNIT_NAME_UPDATE UNIT_FACTION"
 oUF.Tags.Methods["Tukui:GetNameColor"] = function(unit)
 	local Reaction = UnitReaction(unit, "player")
 
-	if (UnitIsPlayer(unit)) then
-		return _TAGS["raidcolor"](unit)
-	elseif (Reaction) then
-		local c = T.Colors.reaction[Reaction]
+	if UnitIsPlayer(unit) then
+		local Class = select(2, UnitClass(unit))
+		local Color = Class and T.Colors.class[Class]
 
-		return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
-	else
-		return string.format("|cff%02x%02x%02x", 1, 1, 1)
+		if Color then
+			return string.format("|cff%02x%02x%02x", Color[1] * 255, Color[2] * 255, Color[3] * 255)
+		end
+	elseif Reaction then
+		local Color = T.Colors.reaction[Reaction]
+
+		if Color then
+			return string.format("|cff%02x%02x%02x", Color[1] * 255, Color[2] * 255, Color[3] * 255)
+		end
 	end
+
+	return "|cffffffff"
 end
 
 oUF.Tags.Events["Tukui:GetNameHostilityColor"] = "UNIT_POWER_UPDATE"
