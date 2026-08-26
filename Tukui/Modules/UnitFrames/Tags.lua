@@ -4,6 +4,7 @@ local oUF = Plugin.oUF or oUF
 local UnitFrames = T["UnitFrames"]
 local DEAD = DEAD
 local CHAT_FLAG_AFK = CHAT_FLAG_AFK
+local TruncateWhenZero = C_StringUtil and C_StringUtil.TruncateWhenZero
 
 UnitFrames.ShortNameLength = 10
 
@@ -111,18 +112,29 @@ oUF.Tags.Methods["Tukui:Dead"] = function(unit)
 	end
 end
 
-oUF.Tags.Events["Tukui:CurrentHP"] = "UNIT_HEALTH"
+oUF.Tags.Events["Tukui:CurrentHP"] = "UNIT_HEALTH UNIT_MAXHEALTH"
 oUF.Tags.Methods["Tukui:CurrentHP"] = function(unit)
-	local HP = UnitFrames.ShortValue(UnitHealth(unit))
+	local HP = UnitHealth(unit)
 
-	return HP
+	-- Midnight can return secret numeric values for unit health. These values
+	-- cannot be compared or divided by addon code, but Blizzard's string helper
+	-- can safely turn zero into an empty string and pass non-zero values through.
+	if T.Midnight then
+		return TruncateWhenZero and TruncateWhenZero(HP) or nil
+	end
+
+	return UnitFrames.ShortValue(HP)
 end
 
-oUF.Tags.Events["Tukui:MaxHP"] = "UNIT_HEALTH"
+oUF.Tags.Events["Tukui:MaxHP"] = "UNIT_HEALTH UNIT_MAXHEALTH"
 oUF.Tags.Methods["Tukui:MaxHP"] = function(unit)
-	local HP = UnitFrames.ShortValue(UnitHealthMax(unit))
+	local HP = UnitHealthMax(unit)
 
-	return HP
+	if T.Midnight then
+		return TruncateWhenZero and TruncateWhenZero(HP) or nil
+	end
+
+	return UnitFrames.ShortValue(HP)
 end
 
 oUF.Tags.Events["Tukui:AFK"] = "PLAYER_FLAGS_CHANGED"
