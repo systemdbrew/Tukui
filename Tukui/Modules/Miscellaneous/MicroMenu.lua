@@ -23,11 +23,15 @@ local RetailMicroButtons = {
 }
 
 function MicroMenu:HideAlerts()
-	HelpTip:HideAllSystem("MicroButtons")
+	if HelpTip then
+		HelpTip:HideAllSystem("MicroButtons")
+	end
 end
 
 function MicroMenu:AddHooks()
-	hooksecurefunc("MainMenuMicroButton_ShowAlert", MicroMenu.HideAlerts)
+	if MainMenuMicroButton_ShowAlert then
+		hooksecurefunc("MainMenuMicroButton_ShowAlert", MicroMenu.HideAlerts)
+	end
 end
 
 do
@@ -35,7 +39,10 @@ do
 	function MicroMenu:ShownMicroButtons()
 		wipe(buttons)
 
-		local Buttons = MICRO_BUTTONS
+		-- MICRO_BUTTONS was removed from the Retail global namespace in WoW 12.1.
+		-- Tukui already maintains the Retail names locally, so use those whenever
+		-- Blizzard's legacy list is unavailable.
+		local Buttons = MICRO_BUTTONS or (T.Retail and RetailMicroButtons) or {}
 
 		for _, name in next, Buttons do
 			local button = _G[name]
@@ -167,7 +174,9 @@ function MicroMenu:GameMenu()
 
 	MicroMenu.Backdrop:SetFrameLevel(0)
 
-	MainMenuBarBackpackButton:SetParent(T.Hider)
+	if MainMenuBarBackpackButton then
+		MainMenuBarBackpackButton:SetParent(T.Hider)
+	end
 
 	if UpdateMicroButtonsParent then
 		UpdateMicroButtonsParent(MicroMenu)
@@ -254,7 +263,7 @@ function MicroMenu:Toggle()
 	end
 
 	-- Hide Game Menu if visible
-	if GameMenuFrame:IsShown() then
+	if GameMenuFrame and GameMenuFrame:IsShown() then
 		HideUIPanel(GameMenuFrame)
 	end
 
