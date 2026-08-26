@@ -14,6 +14,18 @@ if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
 	error("This Tukui fork supports World of Warcraft Retail only.")
 end
 
+-- Retail 12.1 removed the old global action-button overlay glow entry points.
+-- Some legacy Tukui code still hooks them. Provide inert compatibility shims so
+-- the action bar module can finish loading; proc glow will be ported to the
+-- current Retail highlight API separately.
+if not ActionButton_ShowOverlayGlow then
+	function ActionButton_ShowOverlayGlow() end
+end
+
+if not ActionButton_HideOverlayGlow then
+	function ActionButton_HideOverlayGlow() end
+end
+
 Engine[1] = CreateFrame("Frame")
 Engine[2] = {}
 Engine[3] = {}
@@ -38,6 +50,9 @@ end
 -- for existing Tukui code and expose the current expansion generation.
 Engine[1].Retail = true
 Engine[1].Midnight = Toc >= 120000 and Toc < 130000
+-- Keep the older modern-Retail compatibility flag true for code paths that
+-- were introduced during The War Within and still apply to Midnight.
+Engine[1].TWW = Toc >= 110000 and Toc < 130000
 Engine[1].WindowedMode = Windowed
 Engine[1].FullscreenMode = Fullscreen
 Engine[1].Resolution = Resolution or (Windowed and GetCVar("gxWindowedResolution")) or GetCVar("gxFullscreenResolution")
