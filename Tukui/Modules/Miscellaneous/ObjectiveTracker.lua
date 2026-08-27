@@ -5,7 +5,6 @@ if not T.Retail then return end
 local ObjectiveTracker = CreateFrame("Frame")
 local Misc = T["Miscellaneous"]
 local ClassColor = T.Colors.class[T.MyClass]
-local Font = T.GetFont(C.Misc.ObjectiveTrackerFont or C.UnitFrames.Font)
 local hooked = {}
 
 local function SetTrackerFont(fontString, size, r, g, b)
@@ -21,14 +20,11 @@ local function SkinQuestButton(button)
 
 	if not button.TukuiSkinned then
 		local icon = button.icon or button.Icon
-		button:SetSize(26, 26)
+		button:SetSize(24, 24)
 
 		if button.SetNormalTexture then button:SetNormalTexture("") end
 		if button.SetPushedTexture then button:SetPushedTexture("") end
-		if button.CreateBackdrop then
-			button:CreateBackdrop()
-			if button.Backdrop and button.Backdrop.CreateShadow then button.Backdrop:CreateShadow() end
-		end
+		if button.CreateBackdrop then button:CreateBackdrop() end
 		if button.StyleButton then button:StyleButton() end
 
 		if icon then
@@ -40,7 +36,7 @@ local function SkinQuestButton(button)
 	end
 
 	local count = button.Count or button.count
-	if count then SetTrackerFont(count, 11, 1, 1, 1) end
+	if count then SetTrackerFont(count, 10, 1, 1, 1) end
 
 	local hotkey = button.HotKey or button.hotKey
 	if hotkey then hotkey:SetAlpha(0) end
@@ -52,18 +48,16 @@ local function SkinBlock(_, block)
 	SkinQuestButton(block.ItemButton)
 	SkinQuestButton(block.itemButton)
 
-	-- Reapply fonts/colors every update because Blizzard can rebuild/reformat
-	-- these regions after quest tracker refreshes.
-	SetTrackerFont(block.HeaderText, 12, 1, 1, 1)
-	SetTrackerFont(block.Title, 12, 1, .82, 0)
-	SetTrackerFont(block.QuestTitle, 12, 1, .82, 0)
-	SetTrackerFont(block.Text, 11, .85, .85, .85)
+	SetTrackerFont(block.HeaderText, 11, 1, 1, 1)
+	SetTrackerFont(block.Title, 11, 1, .82, 0)
+	SetTrackerFont(block.QuestTitle, 11, 1, .82, 0)
+	SetTrackerFont(block.Text, 10, .82, .82, .82)
 
 	if block.lines then
 		for _, line in pairs(block.lines) do
 			if line then
-				SetTrackerFont(line.Text or line.text, 11, .82, .82, .82)
-				SetTrackerFont(line.Dash or line.dash, 11, .55, .55, .55)
+				SetTrackerFont(line.Text or line.text, 10, .80, .80, .80)
+				SetTrackerFont(line.Dash or line.dash, 10, .45, .45, .45)
 			end
 		end
 	end
@@ -83,12 +77,9 @@ local function SkinBar(bar)
 	if not bar.TukuiSkinned then
 		if bar.StripTextures then bar:StripTextures() end
 		bar:SetStatusBarTexture(T.GetTexture(C["Textures"].QuestProgressTexture))
-		bar:SetHeight(18)
+		bar:SetHeight(14)
 
-		if bar.CreateBackdrop then
-			bar:CreateBackdrop()
-			if bar.Backdrop and bar.Backdrop.CreateShadow then bar.Backdrop:CreateShadow() end
-		end
+		if bar.CreateBackdrop then bar:CreateBackdrop() end
 
 		local icon = bar.Icon
 		if icon then
@@ -99,15 +90,14 @@ local function SkinBar(bar)
 		bar.TukuiSkinned = true
 	end
 
-	-- These can be reset by tracker refreshes, so reassert them.
 	bar:SetStatusBarColor(unpack(ClassColor))
 	if bar.Backdrop then
-		bar.Backdrop:SetBackdropColor(ClassColor[1] * .12, ClassColor[2] * .12, ClassColor[3] * .12)
+		bar.Backdrop:SetBackdropColor(.05, .05, .05, .9)
 	end
 
 	local label = bar.Label
 	if label then
-		SetTrackerFont(label, 11, 1, 1, 1)
+		SetTrackerFont(label, 10, 1, 1, 1)
 		label:ClearAllPoints()
 		label:SetPoint("CENTER", bar)
 	end
@@ -128,6 +118,9 @@ end
 local function SkinHeader(header, mainHeader)
 	if not header then return end
 
+	-- ElvUI's current Retail skin confirms that simply clearing the Blizzard
+	-- header atlas is the stable way to suppress the stock artwork. Keep that
+	-- compatibility technique, but use Tukui's own restrained visual language.
 	if header.Background then
 		if header.Background.SetAtlas then header.Background:SetAtlas(nil) end
 		header.Background:SetAlpha(0)
@@ -135,28 +128,32 @@ local function SkinHeader(header, mainHeader)
 
 	local text = header.Text or header.HeaderText
 	if text then
-		SetTrackerFont(text, 12, 1, 1, 1)
+		SetTrackerFont(text, mainHeader and 11 or 10, .85, .85, .85)
 		text:SetJustifyH("LEFT")
 	end
 
-	if not header.TukuiHeaderBar then
-		local bar = CreateFrame("StatusBar", nil, header)
-		bar:SetHeight(mainHeader and 3 or 2)
-		bar:SetPoint("BOTTOMLEFT", header, 0, 0)
-		bar:SetPoint("BOTTOMRIGHT", header, 0, 0)
-		bar:SetStatusBarTexture(C.Medias.Blank)
-		bar:SetStatusBarColor(unpack(ClassColor))
-		if bar.CreateBackdrop then bar:CreateBackdrop() end
-		header.TukuiHeaderBar = bar
+	-- The previous cyan class-colored lines were visually much louder than
+	-- classic Tukui. Replace them with a subtle one-pixel dark separator.
+	if not header.TukuiHeaderLine then
+		local line = header:CreateTexture(nil, "BACKGROUND")
+		line:SetColorTexture(.10, .10, .10, .95)
+		line:SetHeight(1)
+		line:SetPoint("BOTTOMLEFT", header, 0, 0)
+		line:SetPoint("BOTTOMRIGHT", header, 0, 0)
+		header.TukuiHeaderLine = line
 	else
-		header.TukuiHeaderBar:SetStatusBarColor(unpack(ClassColor))
+		header.TukuiHeaderLine:SetColorTexture(.10, .10, .10, .95)
+	end
+
+	if header.TukuiHeaderBar then
+		header.TukuiHeaderBar:Hide()
 	end
 
 	local minimize = header.MinimizeButton
 	if minimize then
+		minimize:SetSize(13, 13)
 		if not minimize.TukuiSkinned then
 			if minimize.StripTextures then minimize:StripTextures() end
-			minimize:SetSize(14, 14)
 			if minimize.CreateBackdrop then minimize:CreateBackdrop() end
 			minimize.TukuiSkinned = true
 		end
@@ -178,21 +175,15 @@ local function HookTracker(tracker)
 	end
 
 	if tracker.usedBlocks then
-		for _, block in pairs(tracker.usedBlocks) do
-			SkinBlock(tracker, block)
-		end
+		for _, block in pairs(tracker.usedBlocks) do SkinBlock(tracker, block) end
 	end
 
 	if tracker.usedProgressBars then
-		for _, progress in pairs(tracker.usedProgressBars) do
-			SkinBar(progress and progress.Bar)
-		end
+		for _, progress in pairs(tracker.usedProgressBars) do SkinBar(progress and progress.Bar) end
 	end
 
 	if tracker.usedTimerBars then
-		for _, timer in pairs(tracker.usedTimerBars) do
-			SkinBar(timer and timer.Bar)
-		end
+		for _, timer in pairs(tracker.usedTimerBars) do SkinBar(timer and timer.Bar) end
 	end
 end
 
@@ -221,7 +212,6 @@ end
 
 local function SkinAllDelayed()
 	SkinAll()
-	-- Blizzard often finishes rebuilding the tracker after event handlers run.
 	C_Timer.After(0, SkinAll)
 end
 
