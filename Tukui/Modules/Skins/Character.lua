@@ -12,25 +12,44 @@ local function HideTexture(texture)
 	end
 end
 
+local function SkinStatHeader(frame)
+	if not frame or frame.TukuiStatHeaderSkinned then return end
+
+	HideTexture(frame.Background)
+	if frame.StripTextures then frame:StripTextures() end
+	if frame.CreateBackdrop and not frame.Backdrop then
+		frame:CreateBackdrop("Transparent")
+	end
+
+	if frame.Backdrop then
+		frame.Backdrop:ClearAllPoints()
+		frame.Backdrop:SetPoint("CENTER", frame, "CENTER", 0, 0)
+		frame.Backdrop:SetSize(150, 18)
+	end
+
+	frame.TukuiStatHeaderSkinned = true
+end
+
 local function SkinStatsPane()
 	local pane = _G.CharacterStatsPane
 	if not pane then return end
 
 	if not pane.TukuiBaseSkinned then
 		if pane.StripTextures then pane:StripTextures() end
-		if pane.CreateBackdrop and not pane.Backdrop then
-			pane:CreateBackdrop("Transparent")
-		end
 		pane.TukuiBaseSkinned = true
 	end
 
 	local itemLevel = pane.ItemLevelFrame
 	if itemLevel then
-		HideTexture(itemLevel.Background)
+		SkinStatHeader(itemLevel)
 		if itemLevel.Value then
 			itemLevel.Value:SetFontObject(Font)
 			itemLevel.Value:SetTextColor(1, 1, 1)
 		end
+	end
+
+	for _, key in ipairs({"ItemLevelCategory", "AttributesCategory", "EnhancementsCategory"}) do
+		SkinStatHeader(pane[key])
 	end
 
 	if pane.statsFramePool then
@@ -42,12 +61,60 @@ local function SkinStatsPane()
 	end
 end
 
+local function SkinBottomTabs()
+	for i = 1, 4 do
+		local tab = _G["CharacterFrameTab" .. i]
+		if tab and not tab.TukuiTabSkinned then
+			if tab.StripTextures then tab:StripTextures() end
+			if tab.CreateBackdrop and not tab.Backdrop then tab:CreateBackdrop("Transparent") end
+			if tab.Text then tab.Text:SetFontObject(Font) end
+			if tab.SkinTab then tab:SkinTab() end
+			tab.TukuiTabSkinned = true
+		end
+	end
+end
+
+local function SkinSidebarTabs()
+	for i = 1, 4 do
+		local tab = _G["PaperDollSidebarTab" .. i]
+		if tab and not tab.TukuiSidebarSkinned then
+			if tab.StripTextures then tab:StripTextures() end
+			if tab.CreateBackdrop and not tab.Backdrop then tab:CreateBackdrop() end
+
+			local icon = tab.Icon or tab.icon
+			if icon then
+				icon:SetTexCoord(unpack(T.IconCoord))
+				if icon.SetInside then icon:SetInside(tab.Backdrop or tab) end
+			end
+
+			HideTexture(tab.TabBg)
+			HideTexture(tab.Hider)
+			tab.TukuiSidebarSkinned = true
+		end
+	end
+end
+
+local function SkinEquipmentSlots()
+	if not _G.PaperDollItemsFrame then return end
+
+	for _, child in ipairs({_G.PaperDollItemsFrame:GetChildren()}) do
+		if child and (child:IsObjectType("Button") or child:IsObjectType("ItemButton")) and not child.TukuiCharacterSlotSkinned then
+			Skins:SkinItemButton(child)
+			if child.icon then
+				child.icon:SetTexCoord(unpack(T.IconCoord))
+				if child.icon.SetInside then child.icon:SetInside(child) end
+			end
+			child.TukuiCharacterSlotSkinned = true
+		end
+	end
+end
+
 local function ApplyCharacterVisuals()
 	local frame = _G.CharacterFrame
 	if not frame then return end
 
-	-- Blizzard can restore portions of the character frame when it is shown or
-	-- refreshed. These visual changes are intentionally re-applied every time.
+	-- Blizzard restores several regions during PaperDoll refreshes, so visual
+	-- cleanup is deliberately safe to repeat.
 	HideTexture(_G.CharacterFramePortrait)
 
 	local portraitContainer = frame.PortraitContainer
@@ -74,6 +141,9 @@ local function ApplyCharacterVisuals()
 	end
 
 	SkinStatsPane()
+	SkinBottomTabs()
+	SkinSidebarTabs()
+	SkinEquipmentSlots()
 end
 
 local function SkinCharacterFrame()
@@ -81,8 +151,6 @@ local function SkinCharacterFrame()
 	if not frame then return end
 
 	if not frame.TukuiCharacterBaseSkin then
-		-- One-time structural work. Keep this separate from visual re-application
-		-- so Blizzard redraws do not cause duplicate backdrops or hooks.
 		if frame.StripTextures then frame:StripTextures() end
 		if frame.CreateBackdrop and not frame.Backdrop then
 			frame:CreateBackdrop("Transparent")
@@ -110,44 +178,8 @@ local function SkinCharacterFrame()
 			frame.CloseButton:SkinCloseButton()
 		end
 
-		if _G.PaperDollItemsFrame then
-			for _, child in ipairs({_G.PaperDollItemsFrame:GetChildren()}) do
-				if child and (child:IsObjectType("Button") or child:IsObjectType("ItemButton")) then
-					Skins:SkinItemButton(child)
-				end
-			end
-		end
-
-		local tabs = {
-			_G.CharacterFrameTab1,
-			_G.CharacterFrameTab2,
-			_G.CharacterFrameTab3,
-			_G.CharacterFrameTab4,
-		}
-		for _, tab in ipairs(tabs) do
-			if tab and tab.SkinTab and not tab.TukuiTabSkinned then
-				tab:SkinTab()
-				tab.TukuiTabSkinned = true
-			end
-		end
-
-		for i = 1, 4 do
-			local tab = _G["PaperDollSidebarTab" .. i]
-			if tab and not tab.TukuiSidebarSkinned then
-				if tab.StripTextures then tab:StripTextures() end
-				if tab.CreateBackdrop then tab:CreateBackdrop() end
-				local icon = tab.Icon or tab.icon
-				if icon then
-					icon:SetTexCoord(unpack(T.IconCoord))
-					if icon.SetInside then icon:SetInside(tab.Backdrop or tab) end
-				end
-				tab.TukuiSidebarSkinned = true
-			end
-		end
-
 		frame:HookScript("OnShow", function()
 			ApplyCharacterVisuals()
-			-- Some modern PaperDoll code refreshes one frame after OnShow.
 			C_Timer.After(0, ApplyCharacterVisuals)
 		end)
 
