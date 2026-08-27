@@ -108,7 +108,6 @@ Config\Gui.lua
 
 ## Modules
 Modules\Fonts\Fonts.lua
-
 Modules\DataTexts\Core.lua
 Modules\DataTexts\Anchors.lua
 Modules\DataTexts\Elements\Armor.lua
@@ -130,19 +129,16 @@ Modules\DataTexts\Elements\Time.lua
 Modules\DataTexts\Elements\Battleground.lua
 Modules\DataTexts\Elements\Zone.lua
 Modules\DataTexts\Elements\Voice.lua
-
 Modules\ChatFrames\ChatFrames.lua
 Modules\ChatFrames\CopyURL.lua
 Modules\ChatFrames\CopyText.lua
 Modules\ChatFrames\Bubbles.lua
 Modules\ChatFrames\ChatHistory.lua
-
 Modules\Inventory\Core.lua
 Modules\Inventory\BagsRetail.lua
 Modules\Inventory\Loot.lua
 Modules\Inventory\GroupLoot.lua
 Modules\Inventory\Merchant.lua
-
 Modules\ActionBars\Core.lua
 Modules\ActionBars\Skin.lua
 Modules\ActionBars\Bar1.lua
@@ -156,9 +152,7 @@ Modules\ActionBars\Bar8.lua
 Modules\ActionBars\BarPet.lua
 Modules\ActionBars\BarStance.lua
 Modules\ActionBars\Extra.lua
-
 Modules\Cooldowns\Cooldowns.lua
-
 Modules\Miscellaneous\Core.lua
 Modules\Miscellaneous\ObjectiveTracker.lua
 Modules\Miscellaneous\Alerts.lua
@@ -189,16 +183,13 @@ Modules\Miscellaneous\Tutorials.lua
 Modules\Miscellaneous\UIErrorFilter.lua
 Modules\Miscellaneous\UIWidgets.lua
 Modules\Miscellaneous\VehicleIndicator.lua
-
 Modules\Auras\Templates.xml
 Modules\Auras\Auras.lua
 Modules\Auras\Headers.lua
-
 Modules\Maps\Core.lua
 Modules\Maps\Minimap.lua
 Modules\Maps\Zonemap.lua
 Modules\Maps\Worldmap.lua
-
 Modules\UnitFrames\Core.lua
 Modules\UnitFrames\Debuffs.lua
 Modules\UnitFrames\Tracking.lua
@@ -229,12 +220,10 @@ Modules\UnitFrames\Units\Arena.lua
 Modules\UnitFrames\Units\Boss.lua
 Modules\UnitFrames\Groups\Party.lua
 Modules\UnitFrames\Groups\Raid.lua
-
 Modules\Tooltips\Tooltips.lua
-
 Modules\Skins\Core.lua
 Modules\Skins\Character.lua
-
+Modules\Skins\PlayerSpells.lua
 Modules\PetBattles\UnitFrames.lua
 Modules\PetBattles\Actions.lua
 Modules\PetBattles\Others.lua
