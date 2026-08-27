@@ -44,60 +44,39 @@ local function handleFrame(baseName, doNotReparent)
 
 			if(not hookedFrames[frame]) then
 				hooksecurefunc(frame, 'SetParent', resetParent)
-
 				hookedFrames[frame] = true
 			end
 		end
 
 		local health = frame.healthBar or frame.healthbar or frame.HealthBar or (frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar)
-		if(health) then
-			health:UnregisterAllEvents()
-		end
+		if(health) then health:UnregisterAllEvents() end
 
 		local power = frame.manabar or frame.ManaBar
-		if(power) then
-			power:UnregisterAllEvents()
-		end
+		if(power) then power:UnregisterAllEvents() end
 
 		local spell = frame.castBar or frame.spellbar or frame.CastingBarFrame
-		if(spell) then
-			spell:UnregisterAllEvents()
-		end
+		if(spell) then spell:UnregisterAllEvents() end
 
 		local altpowerbar = frame.powerBarAlt or frame.PowerBarAlt
-		if(altpowerbar) then
-			altpowerbar:UnregisterAllEvents()
-		end
+		if(altpowerbar) then altpowerbar:UnregisterAllEvents() end
 
 		local buffFrame = frame.BuffFrame or frame.AurasFrame
-		if(buffFrame) then
-			buffFrame:UnregisterAllEvents()
-		end
+		if(buffFrame) then buffFrame:UnregisterAllEvents() end
 
 		local petFrame = frame.petFrame or frame.PetFrame
-		if(petFrame) then
-			petFrame:UnregisterAllEvents()
-		end
+		if(petFrame) then petFrame:UnregisterAllEvents() end
 
 		local totFrame = frame.totFrame
-		if(totFrame) then
-			totFrame:UnregisterAllEvents()
-		end
+		if(totFrame) then totFrame:UnregisterAllEvents() end
 
 		local classPowerBar = frame.classPowerBar
-		if(classPowerBar) then
-			classPowerBar:UnregisterAllEvents()
-		end
+		if(classPowerBar) then classPowerBar:UnregisterAllEvents() end
 
 		local ccRemoverFrame = frame.CcRemoverFrame
-		if(ccRemoverFrame) then
-			ccRemoverFrame:UnregisterAllEvents()
-		end
+		if(ccRemoverFrame) then ccRemoverFrame:UnregisterAllEvents() end
 
 		local debuffFrame = frame.DebuffFrame
-		if(debuffFrame) then
-			debuffFrame:UnregisterAllEvents()
-		end
+		if(debuffFrame) then debuffFrame:UnregisterAllEvents() end
 	end
 end
 
@@ -115,9 +94,7 @@ function oUF:DisableBlizzard(unit)
 	elseif(unit:match('boss%d?$')) then
 		if(not isBossHooked) then
 			isBossHooked = true
-
 			handleFrame(BossTargetFrameContainer)
-
 			for i = 1, MAX_BOSS_FRAMES do
 				handleFrame('Boss' .. i .. 'TargetFrame', true)
 			end
@@ -125,13 +102,10 @@ function oUF:DisableBlizzard(unit)
 	elseif(unit:match('party%d?$')) then
 		if(not isPartyHooked) then
 			isPartyHooked = true
-
 			handleFrame(PartyFrame)
-
 			for frame in PartyFrame.PartyMemberFramePool:EnumerateActive() do
 				handleFrame(frame, true)
 			end
-
 			for i = 1, MEMBERS_PER_RAID_GROUP do
 				handleFrame('CompactPartyFrameMember' .. i, true)
 			end
@@ -139,9 +113,7 @@ function oUF:DisableBlizzard(unit)
 	elseif(unit:match('arena%d?$')) then
 		if(not isArenaHooked) then
 			isArenaHooked = true
-
 			handleFrame(CompactArenaFrame)
-
 			for _, frame in next, CompactArenaFrame.memberUnitFrames do
 				handleFrame(frame, true)
 			end
@@ -165,3 +137,12 @@ function oUF:DisableNamePlate(frame)
 
 	handleFrame(frame.UnitFrame, true)
 end
+
+-- Retail 12.1 can reinitialize the Blizzard nameplate after AcquireUnitFrame.
+-- Suppress it again when the unit is actually attached to a nameplate, which
+-- matches current oUF's nameplate handling more closely than the old acquire hook.
+local nameplateWatcher = CreateFrame('Frame')
+nameplateWatcher:RegisterEvent('NAME_PLATE_UNIT_ADDED')
+nameplateWatcher:SetScript('OnEvent', function(_, _, unit)
+	oUF:DisableBlizzard(unit)
+end)
