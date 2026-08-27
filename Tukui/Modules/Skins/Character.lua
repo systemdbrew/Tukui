@@ -16,9 +16,12 @@ local function SkinStatsPane()
 	local pane = _G.CharacterStatsPane
 	if not pane then return end
 
-	if pane.StripTextures then pane:StripTextures() end
-	if pane.CreateBackdrop and not pane.Backdrop then
-		pane:CreateBackdrop("Transparent")
+	if not pane.TukuiBaseSkinned then
+		if pane.StripTextures then pane:StripTextures() end
+		if pane.CreateBackdrop and not pane.Backdrop then
+			pane:CreateBackdrop("Transparent")
+		end
+		pane.TukuiBaseSkinned = true
 	end
 
 	local itemLevel = pane.ItemLevelFrame
@@ -39,29 +42,22 @@ local function SkinStatsPane()
 	end
 end
 
-local function SkinCharacterFrame()
+local function ApplyCharacterVisuals()
 	local frame = _G.CharacterFrame
-	if not frame or frame.TukuiCharacterSkin then return end
+	if not frame then return end
 
-	-- Main frame: remove the remaining Blizzard chrome and give it the same
-	-- flat transparent panel treatment used throughout Tukui.
-	if frame.StripTextures then frame:StripTextures() end
-	if frame.CreateBackdrop and not frame.Backdrop then
-		frame:CreateBackdrop("Transparent")
-		if frame.Backdrop and frame.Backdrop.CreateShadow then
-			frame.Backdrop:CreateShadow()
-		end
+	-- Blizzard can restore portions of the character frame when it is shown or
+	-- refreshed. These visual changes are intentionally re-applied every time.
+	HideTexture(_G.CharacterFramePortrait)
+
+	local portraitContainer = frame.PortraitContainer
+	if portraitContainer then
+		if portraitContainer.portrait then HideTexture(portraitContainer.portrait) end
+		if portraitContainer.CircleMask then HideTexture(portraitContainer.CircleMask) end
+		if portraitContainer.PortraitRing then HideTexture(portraitContainer.PortraitRing) end
+		if portraitContainer.SetAlpha then portraitContainer:SetAlpha(0) end
 	end
 
-	if _G.CharacterFrameInset and _G.CharacterFrameInset.StripTextures then
-		_G.CharacterFrameInset:StripTextures()
-	end
-	if _G.CharacterFrameInsetRight and _G.CharacterFrameInsetRight.StripTextures then
-		_G.CharacterFrameInsetRight:StripTextures()
-	end
-
-	-- The modern model scene has several old paper-doll background pieces that
-	-- survive a normal StripTextures call. Hide them explicitly.
 	for _, name in ipairs({
 		"CharacterModelFrameBackgroundTopLeft",
 		"CharacterModelFrameBackgroundTopRight",
@@ -73,68 +69,93 @@ local function SkinCharacterFrame()
 	end
 
 	local model = _G.CharacterModelScene
-	if model then
-		if model.StripTextures then model:StripTextures() end
-		if model.CreateBackdrop and not model.Backdrop then
-			model:CreateBackdrop("Transparent")
-		end
-	end
-
-	-- Remove the empty circular portrait ornament left in the title bar.
-	HideTexture(_G.CharacterFramePortrait)
-	local portraitContainer = frame.PortraitContainer
-	if portraitContainer then
-		if portraitContainer.portrait then HideTexture(portraitContainer.portrait) end
-		if portraitContainer.CircleMask then HideTexture(portraitContainer.CircleMask) end
-		if portraitContainer.PortraitRing then HideTexture(portraitContainer.PortraitRing) end
-		if portraitContainer.SetAlpha then portraitContainer:SetAlpha(0) end
-	end
-
-	if frame.CloseButton and frame.CloseButton.SkinCloseButton then
-		frame.CloseButton:SkinCloseButton()
-	end
-
-	if _G.PaperDollItemsFrame then
-		for _, child in ipairs({_G.PaperDollItemsFrame:GetChildren()}) do
-			if child and (child:IsObjectType("Button") or child:IsObjectType("ItemButton")) then
-				Skins:SkinItemButton(child)
-			end
-		end
+	if model and model.Backdrop then
+		model.Backdrop:SetBackdropColor(0, 0, 0, .75)
 	end
 
 	SkinStatsPane()
+end
 
-	local tabs = {
-		_G.CharacterFrameTab1,
-		_G.CharacterFrameTab2,
-		_G.CharacterFrameTab3,
-		_G.CharacterFrameTab4,
-	}
-	for _, tab in ipairs(tabs) do
-		if tab and tab.SkinTab and not tab.TukuiTabSkinned then
-			tab:SkinTab()
-			tab.TukuiTabSkinned = true
-		end
-	end
+local function SkinCharacterFrame()
+	local frame = _G.CharacterFrame
+	if not frame then return end
 
-	-- Sidebar buttons (character/info, titles and equipment manager) retain a
-	-- lot of Blizzard artwork on current Retail. Keep the icons but flatten the
-	-- surrounding chrome.
-	for i = 1, 4 do
-		local tab = _G["PaperDollSidebarTab" .. i]
-		if tab and not tab.TukuiSidebarSkinned then
-			if tab.StripTextures then tab:StripTextures() end
-			if tab.CreateBackdrop then tab:CreateBackdrop() end
-			local icon = tab.Icon or tab.icon
-			if icon then
-				icon:SetTexCoord(unpack(T.IconCoord))
-				if icon.SetInside then icon:SetInside(tab.Backdrop or tab) end
+	if not frame.TukuiCharacterBaseSkin then
+		-- One-time structural work. Keep this separate from visual re-application
+		-- so Blizzard redraws do not cause duplicate backdrops or hooks.
+		if frame.StripTextures then frame:StripTextures() end
+		if frame.CreateBackdrop and not frame.Backdrop then
+			frame:CreateBackdrop("Transparent")
+			if frame.Backdrop and frame.Backdrop.CreateShadow then
+				frame.Backdrop:CreateShadow()
 			end
-			tab.TukuiSidebarSkinned = true
 		end
+
+		if _G.CharacterFrameInset and _G.CharacterFrameInset.StripTextures then
+			_G.CharacterFrameInset:StripTextures()
+		end
+		if _G.CharacterFrameInsetRight and _G.CharacterFrameInsetRight.StripTextures then
+			_G.CharacterFrameInsetRight:StripTextures()
+		end
+
+		local model = _G.CharacterModelScene
+		if model then
+			if model.StripTextures then model:StripTextures() end
+			if model.CreateBackdrop and not model.Backdrop then
+				model:CreateBackdrop("Transparent")
+			end
+		end
+
+		if frame.CloseButton and frame.CloseButton.SkinCloseButton then
+			frame.CloseButton:SkinCloseButton()
+		end
+
+		if _G.PaperDollItemsFrame then
+			for _, child in ipairs({_G.PaperDollItemsFrame:GetChildren()}) do
+				if child and (child:IsObjectType("Button") or child:IsObjectType("ItemButton")) then
+					Skins:SkinItemButton(child)
+				end
+			end
+		end
+
+		local tabs = {
+			_G.CharacterFrameTab1,
+			_G.CharacterFrameTab2,
+			_G.CharacterFrameTab3,
+			_G.CharacterFrameTab4,
+		}
+		for _, tab in ipairs(tabs) do
+			if tab and tab.SkinTab and not tab.TukuiTabSkinned then
+				tab:SkinTab()
+				tab.TukuiTabSkinned = true
+			end
+		end
+
+		for i = 1, 4 do
+			local tab = _G["PaperDollSidebarTab" .. i]
+			if tab and not tab.TukuiSidebarSkinned then
+				if tab.StripTextures then tab:StripTextures() end
+				if tab.CreateBackdrop then tab:CreateBackdrop() end
+				local icon = tab.Icon or tab.icon
+				if icon then
+					icon:SetTexCoord(unpack(T.IconCoord))
+					if icon.SetInside then icon:SetInside(tab.Backdrop or tab) end
+				end
+				tab.TukuiSidebarSkinned = true
+			end
+		end
+
+		frame:HookScript("OnShow", function()
+			ApplyCharacterVisuals()
+			-- Some modern PaperDoll code refreshes one frame after OnShow.
+			C_Timer.After(0, ApplyCharacterVisuals)
+		end)
+
+		frame.TukuiCharacterBaseSkin = true
 	end
 
-	frame.TukuiCharacterSkin = true
+	ApplyCharacterVisuals()
+	C_Timer.After(0, ApplyCharacterVisuals)
 end
 
 CharacterSkin:RegisterEvent("ADDON_LOADED")
@@ -146,5 +167,8 @@ CharacterSkin:SetScript("OnEvent", function(_, event, addon)
 end)
 
 if type(_G.PaperDollFrame_UpdateStats) == "function" then
-	hooksecurefunc("PaperDollFrame_UpdateStats", SkinStatsPane)
+	hooksecurefunc("PaperDollFrame_UpdateStats", function()
+		SkinStatsPane()
+		C_Timer.After(0, ApplyCharacterVisuals)
+	end)
 end
