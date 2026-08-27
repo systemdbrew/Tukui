@@ -160,6 +160,7 @@ Modules\ActionBars\Extra.lua
 Modules\Cooldowns\Cooldowns.lua
 
 Modules\Miscellaneous\Core.lua
+Modules\Miscellaneous\ObjectiveTracker.lua
 Modules\Miscellaneous\Alerts.lua
 Modules\Miscellaneous\AFK.lua
 Modules\Miscellaneous\AltPowerBar.lua
@@ -230,6 +231,9 @@ Modules\UnitFrames\Groups\Party.lua
 Modules\UnitFrames\Groups\Raid.lua
 
 Modules\Tooltips\Tooltips.lua
+
+Modules\Skins\Core.lua
+Modules\Skins\Character.lua
 
 Modules\PetBattles\UnitFrames.lua
 Modules\PetBattles\Actions.lua
