@@ -49,7 +49,7 @@ local function handleFrame(baseName, doNotReparent)
 			end
 		end
 
-		local health = frame.healthBar or frame.healthbar or frame.HealthBar
+		local health = frame.healthBar or frame.healthbar or frame.HealthBar or (frame.HealthBarsContainer and frame.HealthBarsContainer.healthBar)
 		if(health) then
 			health:UnregisterAllEvents()
 		end
@@ -69,7 +69,7 @@ local function handleFrame(baseName, doNotReparent)
 			altpowerbar:UnregisterAllEvents()
 		end
 
-		local buffFrame = frame.BuffFrame
+		local buffFrame = frame.BuffFrame or frame.AurasFrame
 		if(buffFrame) then
 			buffFrame:UnregisterAllEvents()
 		end
@@ -133,7 +133,7 @@ function oUF:DisableBlizzard(unit)
 			end
 
 			for i = 1, MEMBERS_PER_RAID_GROUP do
-				handleFrame('CompactPartyFrameMember' .. i)
+				handleFrame('CompactPartyFrameMember' .. i, true)
 			end
 		end
 	elseif(unit:match('arena%d?$')) then
@@ -146,6 +146,11 @@ function oUF:DisableBlizzard(unit)
 				handleFrame(frame, true)
 			end
 		end
+	elseif(unit:match('nameplate%d+$')) then
+		local frame = C_NamePlate.GetNamePlateForUnit(unit)
+		if frame and frame.UnitFrame and not frame.UnitFrame:IsForbidden() then
+			handleFrame(frame.UnitFrame, true)
+		end
 	end
 end
 
@@ -155,13 +160,8 @@ function oUF:DisableNamePlate(frame)
 
 	if(not hookedNameplates[frame]) then
 		frame.UnitFrame:HookScript('OnShow', insecureHide)
-
 		hookedNameplates[frame] = true
 	end
 
-	-- Retail 12.1 can re-show/reinitialize the stock nameplate UnitFrame after
-	-- acquisition. Hiding it in place is no longer sufficient and leaves the
-	-- Blizzard name/health text drawn underneath Tukui's plate. Reparent the
-	-- stock frame to our hidden parent, matching current oUF behavior.
-	handleFrame(frame.UnitFrame)
+	handleFrame(frame.UnitFrame, true)
 end
