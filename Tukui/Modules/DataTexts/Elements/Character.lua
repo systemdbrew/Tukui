@@ -3,24 +3,45 @@ local T, C, L = unpack((select(2, ...)))
 local DataText = T["DataTexts"]
 local ClassColor = T.RGBToHex(unpack(T.Colors.class[T.MyClass]))
 
+-- Retail no longer has a ranged weapon slot, while cloaks do have durability.
+-- Keep a dedicated modern slot list instead of relying on the old locale table.
+local DurabilitySlots = T.Retail and {
+	{INVSLOT_HEAD, "Head", 1000},
+	{INVSLOT_SHOULDER, "Shoulder", 1000},
+	{INVSLOT_CHEST, "Chest", 1000},
+	{INVSLOT_WAIST, "Waist", 1000},
+	{INVSLOT_WRIST, "Wrist", 1000},
+	{INVSLOT_HAND, "Hands", 1000},
+	{INVSLOT_LEGS, "Legs", 1000},
+	{INVSLOT_FEET, "Feet", 1000},
+	{INVSLOT_BACK, "Back", 1000},
+	{INVSLOT_MAINHAND, "Main Hand", 1000},
+	{INVSLOT_OFFHAND, "Off Hand", 1000},
+} or L.DataText.Slots
+
 local Update = function(self)
-	local Total = 0
-	local Current, Max
+	local Lowest = 1
+	local FoundDurability = false
 
-	for i = 1, 11 do
-		if (GetInventoryItemLink("player", L.DataText.Slots[i][1]) ~= nil) then
-			Current, Max = GetInventoryItemDurability(L.DataText.Slots[i][1])
+	for _, Slot in ipairs(DurabilitySlots) do
+		-- Reset stale values first. An empty/indestructible slot returns nil.
+		Slot[3] = 1000
 
-			if Current then
-				L.DataText.Slots[i][3] = Current / Max
+		local Current, Max = GetInventoryItemDurability(Slot[1])
+		if Current and Max and Max > 0 then
+			local Value = Current / Max
+			Slot[3] = Value
+			FoundDurability = true
 
-				Total = Total + 1
+			if Value < Lowest then
+				Lowest = Value
 			end
 		end
 	end
 
-	table.sort(L.DataText.Slots, function(a, b) return a[3] < b[3] end)
-	local durability = floor(L.DataText.Slots[1][3] * 100)
+	-- A character with no durability-bearing gear should read as 100%, not the
+	-- old 1000 sentinel multiplied into 100000%.
+	local durability = floor((FoundDurability and Lowest or 1) * 100)
 	local r, g, b = T.ColorGradient(durability, 100, 0.8, 0, 0, 0.8, 0.8, 0, 0, 0.8, 0)
 
 	self.Text:SetFormattedText("Durability |cff%02x%02x%02x%s%%|r", r * 255, g * 255, b * 255, durability)
@@ -74,9 +95,7 @@ local OnEnter = function(self)
 					end
 
 					if Tooltip and IsAlternativeTooltip then
-						-- Remove double enter, for gaining tooltip space
 						Tooltip = string.gsub(Tooltip, "\n\n", " ")
-
 						GameTooltip:AddLine(Tooltip, .75, .75, .75)
 						GameTooltip:AddLine(" ")
 					end
@@ -89,17 +108,21 @@ local OnEnter = function(self)
 		end
 	end
 
-	-- Display durability
-	GameTooltip:AddDoubleLine("|CFFFF8000"..DURABILITY..":|r", floor(L.DataText.Slots[1][3] * 100).."%")
+	local Lowest = 1
+	for _, Slot in ipairs(DurabilitySlots) do
+		if Slot[3] ~= 1000 and Slot[3] < Lowest then
+			Lowest = Slot[3]
+		end
+	end
 
-	for i = 1, 11 do
-		if (L.DataText.Slots[i][3] ~= 1000) then
-			local Green, Red
+	GameTooltip:AddDoubleLine("|CFFFF8000"..DURABILITY..":|r", floor(Lowest * 100).."%")
 
-			Green = L.DataText.Slots[i][3] * 2
-			Red = 1 - Green
+	for _, Slot in ipairs(DurabilitySlots) do
+		if Slot[3] ~= 1000 then
+			local Green = Slot[3] * 2
+			local Red = 1 - Green
 
-			GameTooltip:AddDoubleLine(L.DataText.Slots[i][2]..":", floor(L.DataText.Slots[i][3] * 100).."%", .75, .75, .75, Red + 1, Green, 0)
+			GameTooltip:AddDoubleLine(Slot[2]..":", floor(Slot[3] * 100).."%", .75, .75, .75, Red + 1, Green, 0)
 		end
 	end
 
@@ -109,7 +132,6 @@ end
 local ToggleCharacter = function(self)
 	if InCombatLockdown() then
 		T.Print(ERR_NOT_IN_COMBAT)
-
 		return
 	end
 
@@ -120,6 +142,7 @@ local Enable = function(self)
 	self:RegisterEvent("MERCHANT_SHOW")
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
+	self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 	self:SetScript("OnEvent", Update)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", GameTooltip_Hide)
