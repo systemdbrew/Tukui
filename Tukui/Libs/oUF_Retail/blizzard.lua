@@ -116,17 +116,8 @@ function oUF:DisableBlizzard(unit)
 		if(not isBossHooked) then
 			isBossHooked = true
 
-			-- it's needed because the layout manager can bring frames that are
-			-- controlled by containers back from the dead when a user chooses
-			-- to revert all changes
-			-- for now I'll just reparent it, but more might be needed in the
-			-- future, watch it
 			handleFrame(BossTargetFrameContainer)
 
-			-- do not reparent frames controlled by containers, the vert/horiz
-			-- layout code will go insane because it won't be able to calculate
-			-- the size properly, 0 or negative sizes in turn will break the
-			-- layout manager, fun...
 			for i = 1, MAX_BOSS_FRAMES do
 				handleFrame('Boss' .. i .. 'TargetFrame', true)
 			end
@@ -168,5 +159,9 @@ function oUF:DisableNamePlate(frame)
 		hookedNameplates[frame] = true
 	end
 
-	handleFrame(frame.UnitFrame, true)
+	-- Retail 12.1 can re-show/reinitialize the stock nameplate UnitFrame after
+	-- acquisition. Hiding it in place is no longer sufficient and leaves the
+	-- Blizzard name/health text drawn underneath Tukui's plate. Reparent the
+	-- stock frame to our hidden parent, matching current oUF behavior.
+	handleFrame(frame.UnitFrame)
 end
