@@ -14,4 +14,5 @@ T["UnitFrames"] = CreateFrame("Frame")
 
 if T.Retail then
 	T["PetBattles"] = CreateFrame("Frame")
+	T["Skins"] = CreateFrame("Frame")
 end
