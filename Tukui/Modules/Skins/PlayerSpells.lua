@@ -19,6 +19,20 @@ local function SkinDialog(dialog)
 	Skins:SkinEditBox(dialog.LoadoutName)
 end
 
+local function SkinDropDown(dropdown)
+	if not dropdown or dropdown.TukuiDropDownSkinned then return end
+	if dropdown.StripTextures then dropdown:StripTextures() end
+	if dropdown.CreateBackdrop then dropdown:CreateBackdrop() end
+	local button = dropdown.Button or dropdown.DropDownButton
+	if button then Skins:SkinButton(button) end
+	local text = dropdown.Text or dropdown.SelectionDetails and dropdown.SelectionDetails.SelectionName
+	if text and text.SetFontObject then
+		text:SetFontObject(Font)
+		text:SetTextColor(1, 1, 1)
+	end
+	dropdown.TukuiDropDownSkinned = true
+end
+
 local function SkinSpellButton(button)
 	if not button then return end
 	local icon = button.Icon or button.IconTexture or button.icon
@@ -123,6 +137,52 @@ local function SkinSpellBook(frame)
 	ScanSpellButtons(frame, 0)
 end
 
+local function SkinTalents(talents)
+	if not talents then return end
+
+	-- Keep Blizzard's class/spec artwork and the talent-node graph intact.
+	-- Only Tukui-skin the surrounding controls and utility panels.
+	HideRegion(talents.BlackBG)
+	HideRegion(talents.BottomBar)
+
+	Skins:SkinButton(talents.ApplyButton)
+	Skins:SkinButton(talents.InspectCopyButton)
+	Skins:SkinEditBox(talents.SearchBox)
+
+	if talents.LoadSystem then
+		SkinDropDown(talents.LoadSystem.Dropdown)
+		if talents.LoadSystem.CreateButton then Skins:SkinButton(talents.LoadSystem.CreateButton) end
+		if talents.LoadSystem.DeleteButton then Skins:SkinButton(talents.LoadSystem.DeleteButton) end
+	end
+
+	if talents.SearchPreviewContainer then Skins:SkinFrame(talents.SearchPreviewContainer, true) end
+	if talents.PvPTalentList then Skins:SkinFrame(talents.PvPTalentList) end
+
+	for _, display in ipairs({talents.ClassCurrencyDisplay, talents.SpecCurrencyDisplay}) do
+		if display then
+			local label = display.CurrencyLabel
+			local amount = display.CurrentAmountContainer and display.CurrentAmountContainer.CurrencyAmount
+			if label and label.SetFontObject then label:SetFontObject(Font); label:SetTextColor(1, 1, 1) end
+			if amount and amount.SetFontObject then amount:SetFontObject(Font); amount:SetTextColor(1, 1, 1) end
+		end
+	end
+
+	local hero = talents.HeroTalentsContainer
+	if hero and hero.HeroSpecLabel and hero.HeroSpecLabel.SetFontObject then
+		hero.HeroSpecLabel:SetFontObject(Font)
+		hero.HeroSpecLabel:SetTextColor(1, 1, 1)
+	end
+
+	if not talents.TukuiTalentBackdrop and talents.CreateBackdrop then
+		-- A subtle border around the whole talent canvas, without covering the art.
+		talents:CreateBackdrop("Transparent")
+		if talents.Backdrop then
+			talents.Backdrop:SetFrameLevel(math.max(0, talents:GetFrameLevel() - 1))
+		end
+		talents.TukuiTalentBackdrop = true
+	end
+end
+
 local function SkinPlayerSpells()
 	local frame = _G.PlayerSpellsFrame
 	if not frame then return end
@@ -132,16 +192,17 @@ local function SkinPlayerSpells()
 	HideRegion(_G.PlayerSpellsFramePortrait)
 
 	if frame.TabSystem then for _, tab in ipairs({frame.TabSystem:GetChildren()}) do Skins:SkinTab(tab) end end
-	local talents = frame.TalentsFrame
-	if talents then
-		HideRegion(talents.BlackBG); HideRegion(talents.BottomBar)
-		Skins:SkinButton(talents.ApplyButton); Skins:SkinButton(talents.InspectCopyButton); Skins:SkinEditBox(talents.SearchBox)
-		if talents.SearchPreviewContainer then Skins:SkinFrame(talents.SearchPreviewContainer, true) end
-		if talents.PvPTalentList then Skins:SkinFrame(talents.PvPTalentList) end
-	end
-
+	SkinTalents(frame.TalentsFrame)
 	SkinSpellBook(frame.SpellBookFrame)
-	SkinDialog(_G.ClassTalentLoadoutImportDialog); SkinDialog(_G.ClassTalentLoadoutCreateDialog); SkinDialog(_G.ClassTalentLoadoutEditDialog)
+	SkinDialog(_G.ClassTalentLoadoutImportDialog)
+	SkinDialog(_G.ClassTalentLoadoutCreateDialog)
+	SkinDialog(_G.ClassTalentLoadoutEditDialog)
+
+	local heroSelect = _G.HeroTalentsSelectionDialog
+	if heroSelect then
+		Skins:SkinFrame(heroSelect, true)
+		Skins:SkinCloseButton(heroSelect.CloseButton)
+	end
 
 	if not frame.TukuiRefreshHook then
 		frame:HookScript("OnShow", function()
