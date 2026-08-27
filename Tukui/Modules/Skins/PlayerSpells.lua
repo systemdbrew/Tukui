@@ -20,21 +20,17 @@ local function SkinDialog(dialog)
 end
 
 local function SkinSpellButton(button)
-	if not button or button.TukuiSpellButtonSkinned then return end
-
+	if not button then return end
 	local icon = button.Icon or button.IconTexture or button.icon
 	if not icon then return end
 
-	if button.Ring then button.Ring:Hide() end
-	if button.CircleMask then button.CircleMask:Hide() end
-	if button.Border then HideRegion(button.Border) end
-	if button.IconBorder then HideRegion(button.IconBorder) end
-	if button.NameFrame then HideRegion(button.NameFrame) end
-
+	for _, key in ipairs({"Ring", "CircleMask", "Border", "IconBorder", "NameFrame", "SlotArt", "HighlightTexture"}) do
+		HideRegion(button[key])
+	end
 	if icon.SetTexCoord then icon:SetTexCoord(unpack(T.IconCoord)) end
 	if button.CreateBackdrop and not button.Backdrop then button:CreateBackdrop() end
 	if icon.SetInside then icon:SetInside(button.Backdrop or button) end
-	if button.StyleButton then button:StyleButton() end
+	if button.StyleButton and not button.TukuiSpellButtonSkinned then button:StyleButton() end
 
 	for _, text in ipairs({button.SpellName, button.SpellSubName, button.spellString, button.subSpellString, button.Name}) do
 		if text and text.SetFontObject then
@@ -42,39 +38,56 @@ local function SkinSpellButton(button)
 			text:SetTextColor(1, 1, 1)
 		end
 	end
-
 	button.TukuiSpellButtonSkinned = true
 end
 
+local function CleanRegions(frame, depth)
+	if not frame or depth > 5 then return end
+	if frame.GetRegions then
+		for _, region in ipairs({frame:GetRegions()}) do
+			if region and region.GetObjectType then
+				local kind = region:GetObjectType()
+				if kind == "Texture" then
+					local atlas = region.GetAtlas and region:GetAtlas()
+					local texture = region.GetTexture and region:GetTexture()
+					local name = region.GetDebugName and region:GetDebugName() or ""
+					local marker = string.lower(tostring(atlas or texture or name or ""))
+					if marker:find("book") or marker:find("parch") or marker:find("page") or marker:find("divider") or marker:find("header") then
+						region:SetAlpha(0)
+					end
+				elseif kind == "FontString" then
+					region:SetFontObject(Font)
+					region:SetTextColor(1, 1, 1)
+				end
+			end
+		end
+	end
+	if frame.GetChildren then
+		for _, child in ipairs({frame:GetChildren()}) do CleanRegions(child, depth + 1) end
+	end
+end
+
 local function ScanSpellButtons(frame, depth)
-	if not frame or depth > 5 or not frame.GetChildren then return end
+	if not frame or depth > 6 or not frame.GetChildren then return end
 	for _, child in ipairs({frame:GetChildren()}) do
 		if child then
 			local icon = child.Icon or child.IconTexture or child.icon
-			if icon and (child.SpellName or child.SpellSubName or child.spellString or child.spellID or child.GetID) then
-				SkinSpellButton(child)
-			end
+			if icon and (child.SpellName or child.SpellSubName or child.spellString or child.spellID or child.GetID) then SkinSpellButton(child) end
 			ScanSpellButtons(child, depth + 1)
 		end
 	end
 end
 
 local function SkinPagingButton(button)
-	if not button or button.TukuiPagingSkinned then return end
-	Skins:SkinButton(button)
+	if not button then return end
+	if not button.TukuiPagingSkinned then Skins:SkinButton(button) end
 	local normal = button.GetNormalTexture and button:GetNormalTexture()
-	if normal then
-		normal:SetVertexColor(1, 1, 1)
-		normal:SetAlpha(1)
-	end
+	if normal then normal:SetVertexColor(1, 1, 1); normal:SetAlpha(1) end
 	button.TukuiPagingSkinned = true
 end
 
 local function SkinSpellBook(frame)
 	if not frame then return end
-
-	-- Current Retail still renders the old parchment/book art inside this frame.
-	-- Strip the container art but leave child spell icons/text intact.
 	if not frame.TukuiBookBaseSkinned then
 		if frame.StripTextures then frame:StripTextures() end
 		if frame.CreateBackdrop and not frame.Backdrop then frame:CreateBackdrop("Transparent") end
@@ -82,13 +95,11 @@ local function SkinSpellBook(frame)
 	end
 
 	Skins:SkinEditBox(frame.SearchBox)
-	if frame.TopBar then frame.TopBar:SetAlpha(0) end
-	if frame.BookCornerFlipbook then frame.BookCornerFlipbook:Hide() end
-	if frame.HelpPlateButton and frame.HelpPlateButton.Ring then frame.HelpPlateButton.Ring:Hide() end
+	HideRegion(frame.TopBar)
+	HideRegion(frame.BookCornerFlipbook)
+	if frame.HelpPlateButton and frame.HelpPlateButton.Ring then HideRegion(frame.HelpPlateButton.Ring) end
 
-	if frame.CategoryTabSystem then
-		for _, tab in ipairs({frame.CategoryTabSystem:GetChildren()}) do Skins:SkinTab(tab) end
-	end
+	if frame.CategoryTabSystem then for _, tab in ipairs({frame.CategoryTabSystem:GetChildren()}) do Skins:SkinTab(tab) end end
 
 	local paged = frame.PagedSpellsFrame
 	if paged then
@@ -100,60 +111,45 @@ local function SkinSpellBook(frame)
 				view.TukuiViewSkinned = true
 			end
 		end
-
 		if paged.PagingControls then
 			local controls = paged.PagingControls
-			if controls.PageText then
-				controls.PageText:SetFontObject(Font)
-				controls.PageText:SetTextColor(1, 1, 1)
-			end
+			if controls.PageText then controls.PageText:SetFontObject(Font); controls.PageText:SetTextColor(1, 1, 1) end
 			SkinPagingButton(controls.PrevPageButton)
 			SkinPagingButton(controls.NextPageButton)
 		end
 	end
 
+	CleanRegions(frame, 0)
 	ScanSpellButtons(frame, 0)
 end
 
 local function SkinPlayerSpells()
 	local frame = _G.PlayerSpellsFrame
 	if not frame then return end
-
 	Skins:SkinFrame(frame, true)
 	Skins:SkinCloseButton(frame.CloseButton)
-	if frame.PortraitContainer then frame.PortraitContainer:SetAlpha(0) end
+	HideRegion(frame.PortraitContainer)
 	HideRegion(_G.PlayerSpellsFramePortrait)
 
-	if frame.TabSystem then
-		for _, tab in ipairs({frame.TabSystem:GetChildren()}) do Skins:SkinTab(tab) end
-	end
-
+	if frame.TabSystem then for _, tab in ipairs({frame.TabSystem:GetChildren()}) do Skins:SkinTab(tab) end end
 	local talents = frame.TalentsFrame
 	if talents then
-		if talents.BlackBG then talents.BlackBG:SetAlpha(0) end
-		if talents.BottomBar then talents.BottomBar:SetAlpha(0) end
-		Skins:SkinButton(talents.ApplyButton)
-		Skins:SkinButton(talents.InspectCopyButton)
-		Skins:SkinEditBox(talents.SearchBox)
+		HideRegion(talents.BlackBG); HideRegion(talents.BottomBar)
+		Skins:SkinButton(talents.ApplyButton); Skins:SkinButton(talents.InspectCopyButton); Skins:SkinEditBox(talents.SearchBox)
 		if talents.SearchPreviewContainer then Skins:SkinFrame(talents.SearchPreviewContainer, true) end
 		if talents.PvPTalentList then Skins:SkinFrame(talents.PvPTalentList) end
 	end
 
 	SkinSpellBook(frame.SpellBookFrame)
-	SkinDialog(_G.ClassTalentLoadoutImportDialog)
-	SkinDialog(_G.ClassTalentLoadoutCreateDialog)
-	SkinDialog(_G.ClassTalentLoadoutEditDialog)
+	SkinDialog(_G.ClassTalentLoadoutImportDialog); SkinDialog(_G.ClassTalentLoadoutCreateDialog); SkinDialog(_G.ClassTalentLoadoutEditDialog)
 
 	if not frame.TukuiRefreshHook then
 		frame:HookScript("OnShow", function()
-			C_Timer.After(0, SkinPlayerSpells)
-			C_Timer.After(.1, SkinPlayerSpells)
+			C_Timer.After(0, SkinPlayerSpells); C_Timer.After(.1, SkinPlayerSpells); C_Timer.After(.5, SkinPlayerSpells)
 		end)
 		frame.TukuiRefreshHook = true
 	end
 end
 
 Loader:RegisterEvent("ADDON_LOADED")
-Loader:SetScript("OnEvent", function(_, _, addon)
-	if addon == "Blizzard_PlayerSpells" then SkinPlayerSpells() end
-end)
+Loader:SetScript("OnEvent", function(_, _, addon) if addon == "Blizzard_PlayerSpells" then SkinPlayerSpells() end end)
